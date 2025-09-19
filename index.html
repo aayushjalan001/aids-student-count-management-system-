@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Attendance System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #4ca1af);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .header {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .camera {
+            position: relative;
+            border: 5px solid #ffffff;
+            border-radius: 20px;
+            width: 400px;
+            height: 400px;
+            overflow: hidden;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+            background-color: #1f2833;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #85d8fc;
+        }
+
+        .recognized {
+            color: #4caf50;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .footer a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .attendance-check {
+            margin-top: 30px;
+            font-size: 1.2rem;
+        }
+
+        .attendance-check input {
+            font-size: 1rem;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ffffff;
+            background-color: #333;
+            color: #ffffff;
+            margin-right: 10px;
+        }
+
+        .attendance-check button {
+            font-size: 1rem;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .attendance-check button:hover {
+            background-color: #45a049;
+        }
+
+        .nav-buttons {
+            margin-top: 20px;
+        }
+
+        .nav-buttons button {
+            font-size: 1rem;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 10px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-buttons button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Attendance System</div>
+        <div class="camera">
+            <img id="videoFeed" src="/video_feed" alt="Video Feed" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div class="status" id="status">Awaiting Recognition...</div>
+        
+        <!-- Attendance check section -->
+        <div class="attendance-check">
+            <input type="date" id="attendanceDate" />
+            <button onclick="checkAttendance()">Check Attendance</button>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="nav-buttons">
+            <button onclick="goToDashboard()">Go to Dashboard</button>
+        </div>
+
+        <div class="footer">
+            Created by <a href="#">Karan Balaji</a>
+        </div>
+    </div>
+
+    <script>
+        const videoFeed = document.getElementById('videoFeed');
+        const statusText = document.getElementById('status');
+
+        // Periodically check recognition status
+        setInterval(() => {
+            fetch('/recognition_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.recognized) {
+                        statusText.textContent = `Welcome, ${data.name}! Attendance marked.`;
+                        statusText.classList.add('recognized');
+                    } else {
+                        statusText.textContent = 'Awaiting Recognition...';
+                        statusText.classList.remove('recognized');
+                    }
+                })
+                .catch(error => console.error('Error fetching recognition status:', error));
+        }, 2000);
+
+        // Function to handle the attendance check button click
+        function checkAttendance() {
+            const date = document.getElementById('attendanceDate').value;
+
+            if (!date) {
+                alert("Please select a date.");
+                return;
+            }
+
+            fetch('/retrieve_attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ date: date })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle attendance data (e.g., show in a modal or alert)
+                if (data.length > 0) {
+                    let attendanceList = 'Attendance for ' + date + ':\n';
+                    data.forEach(record => {
+                        attendanceList += `${record.name} - ${record.time}\n`;
+                    });
+                    alert(attendanceList);
+                } else {
+                    alert("No attendance records found for this date.");
+                }
+            })
+            .catch(error => console.error('Error fetching attendance:', error));
+        }
+
+        // Function to navigate to the dashboard
+        function goToDashboard() {
+            window.location.href = "/dashboard";
+        }
+    </script>
+</body>
+</html>
